@@ -60,6 +60,8 @@ namespace SelectionProblems
                 MessageBox.Show("总题数与答案个数不一致！");
             }
             answer = line;
+
+            textQuestion.LoadFile("data/0000.rtf");
         }
 
         private void button_Next_Click(object sender, EventArgs e)
