@@ -4,10 +4,11 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.IO;
 
 namespace SelectionProblems
 {
@@ -19,49 +20,99 @@ namespace SelectionProblems
         string answer;
         int totalCorrect = 0;
         int selected = -1;
+        bool[] answerCorrect;
+        bool showDetailedResult = false;
         public MainForm()
         {
             InitializeComponent();
 
             char []whitespace = new char[]{' ', '\t', '\r', '\n'};
-            StreamReader fs = new StreamReader(new FileStream("data/answer.txt", FileMode.Open, FileAccess.Read));
-            String line = fs.ReadLine();
-            line.Trim();
-            int idx = line.IndexOfAny(whitespace);
-            if (idx > 0)
+            StreamReader fs;
+            try
             {
-                line = line.Remove(idx);
+                fs = new StreamReader("data/answer.txt");
             }
-            scorePerQ = Int32.Parse(line);
-
-            line = fs.ReadLine();
-            line.Trim();
-            idx = line.IndexOfAny(whitespace);
-            if (idx > 0)
+            catch (Exception)
             {
-                line = line.Remove(idx);
+                MessageBox.Show("未找到试卷定义文件 data/answer.txt");
+                return;
             }
-            totalNum = Int32.Parse(line);
-
-            line = fs.ReadLine();
-            line.Trim();
-            line = line.ToUpper();
-            for (int i = 0; i < line.Length; i++)
+            try
             {
-                if (line[i] < 'A' || line[i] > 'D')
+                String line = fs.ReadLine();
+                line.Trim();
+                int idx = line.IndexOfAny(whitespace);
+                if (idx > 0)
                 {
-                    line = line.Remove(i, 1);
-                    i--;
+                    line = line.Remove(idx);
+                }
+                scorePerQ = Int32.Parse(line);
+
+                line = fs.ReadLine();
+                line.Trim();
+                idx = line.IndexOfAny(whitespace);
+                if (idx > 0)
+                {
+                    line = line.Remove(idx);
+                }
+                totalNum = Int32.Parse(line);
+
+                line = fs.ReadLine();
+                line.Trim();
+                line = line.ToUpper();
+                for (int i = 0; i < line.Length; i++)
+                {
+                    if (line[i] < 'A' || line[i] > 'D')
+                    {
+                        line = line.Remove(i, 1);
+                        i--;
+                    }
+                }
+
+                if (line.Length != totalNum)
+                {
+                    MessageBox.Show("总题数与答案个数不一致");
+                }
+                answer = line;
+                answerCorrect = new bool[totalNum];
+
+                Regex setting = new Regex(@"^\s*(\w+)\s*=\s*(\w+)\s*(?:;.*)?$");
+                while (fs.Peek() >= 0)
+                {
+                    line = fs.ReadLine();
+                    MatchCollection mc = setting.Matches(line);
+                    if (mc.Count == 1)
+                    {
+                        String key = mc[0].Groups[1].Value;
+                        String val = mc[0].Groups[2].Value;
+                        switch(key)
+                        {
+                        case "show_result":
+                            if (val == "true")
+                            {
+                                showDetailedResult = true;
+                            }
+                            break;
+                        default:
+                            MessageBox.Show("未知的设置项 - " + key);
+                            break;
+                        }
+                    }
                 }
             }
-
-            if (line.Length != totalNum)
+            finally
             {
-                MessageBox.Show("总题数与答案个数不一致！");
+                fs.Close();
             }
-            answer = line;
-
-            textQuestion.LoadFile("data/0000.rtf");
+            try
+            {
+                textQuestion.LoadFile("data/0000.rtf");
+            }
+            catch (IOException)
+            {
+                textQuestion.Text = "请点击下一题";
+                MessageBox.Show("缺失题目定义文件 data/0000.rtf");
+            }
         }
 
         private void button_Next_Click(object sender, EventArgs e)
@@ -95,17 +146,46 @@ namespace SelectionProblems
                     if (selected == answer[qIndex - 1] - 'A')
                     {
                         totalCorrect++;
+                        answerCorrect[qIndex - 1] = true;
+                    }
+                    else
+                    {
+                        answerCorrect[qIndex - 1] = false;
                     }
                 }
             }
             qIndex++;
             if (qIndex <= totalNum)
             {
-                textQuestion.LoadFile(String.Format("data/{0:0000}.rtf", qIndex));
+                String fn = String.Format("data/{0:0000}.rtf", qIndex);
+                try
+                {
+                    textQuestion.LoadFile(fn);
+                }
+                catch(IOException)
+                {
+                    MessageBox.Show("打开试题文件 " + fn + " 失败");
+                    this.Close();
+                    return;
+                }
             }
             else
             {
-                String msg = String.Format("测试结束，正确{0}题，总分{1}分", totalCorrect, totalCorrect * scorePerQ);
+                String msg = "";
+                if (showDetailedResult)
+                {
+                    msg += "测试结果：\n";
+                    for (int i = 0; i < totalNum; i++)
+                    {
+                        if (i > 0 && i % 10 == 0)
+                        {
+                            msg += "\n";
+                        }
+                        msg += (i + 1) + ". " + (answerCorrect[i] ? "正确" : "错误") + "   ";
+                    }
+                    msg += "\n";
+                }
+                msg += String.Format("测试结束，正确{0}题，总分{1}分", totalCorrect, totalCorrect * scorePerQ);
                 textQuestion.Text = msg;
                 MessageBox.Show(msg);
                 radioButton1.Enabled = false;
