@@ -34,6 +34,8 @@ namespace SelectionProblems
         private int selected = -1;
         // whether we should show the detailed result to the students
         private bool showDetailedResult = false;
+        // titlebar text;
+        private string titleString = "测试";
 
         // random shuffled order of test indices staring from 1;
         // This should be only used when displaying problems,
@@ -50,7 +52,7 @@ namespace SelectionProblems
             char []whitespace = new char[]{' ', '\t', '\r', '\n'};
             try
             {
-                using (StreamReader fs = new StreamReader("data/answer.txt"))
+                using (StreamReader fs = new StreamReader("data/answer.txt", Encoding.GetEncoding(936)))
                 {
                     String line = fs.ReadLine();
                     line.Trim();
@@ -130,6 +132,9 @@ namespace SelectionProblems
                                     }
                                 }
                                 break;
+                            case "title":
+                                titleString = val;
+                                break;
                             default:
                                 MessageBox.Show("未知的设置项 - " + key);
                                 break;
@@ -163,6 +168,8 @@ namespace SelectionProblems
             radios[1] = radioButton2;
             radios[2] = radioButton3;
             radios[3] = radioButton4;
+            foreach (RadioButton r in radios) { r.Enabled = false; r.Checked = false; }
+            setTitle();
         }
 
         private void button_Next_Click(object sender, EventArgs e)
@@ -231,12 +238,13 @@ namespace SelectionProblems
             }
             if (qIndex > largestIndex || qIndex < 1)
             {   // no problem, no answer provided previously
-                foreach (RadioButton r in radios) { r.Checked = false; }
+                foreach (RadioButton r in radios) { r.Checked = false; r.Enabled = qIndex >= 1 && qIndex <= totalNum; }
             }
             else
             {
                 radios[testeeAnswers[qIndex]].Checked = true;
             }
+            setTitle();
         }
 
         private void button_Prev_Click(object sender, EventArgs e)
@@ -266,6 +274,7 @@ namespace SelectionProblems
             qIndex--;
             showProblem();
             radios[testeeAnswers[qIndex]].Checked = true;
+            setTitle();
         }
 
         private void showProblem()
@@ -280,6 +289,18 @@ namespace SelectionProblems
                 MessageBox.Show("打开试题文件 " + fn + " 失败");
                 this.Close();
                 return;
+            }
+        }
+
+        private void setTitle()
+        {
+            if (qIndex < 1 || qIndex > totalNum)
+            {
+                Text = titleString;
+            }
+            else
+            {
+                Text = titleString + "  " + qIndex + " / " + totalNum;
             }
         }
     }
