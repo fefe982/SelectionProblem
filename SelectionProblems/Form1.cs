@@ -49,6 +49,15 @@ namespace SelectionProblems
         {
             InitializeComponent();
 
+            button_Prev.Enabled = false;
+
+            radios[0] = radioButton1;
+            radios[1] = radioButton2;
+            radios[2] = radioButton3;
+            radios[3] = radioButton4;
+            foreach (RadioButton r in radios) { r.Enabled = false; r.Checked = false; }
+
+
             char []whitespace = new char[]{' ', '\t', '\r', '\n'};
             try
             {
@@ -161,14 +170,6 @@ namespace SelectionProblems
                 textQuestion.Text = "请点击下一题";
                 MessageBox.Show("缺失题目定义文件 data/0000.rtf");
             }
-
-            button_Prev.Enabled = false;
-
-            radios[0] = radioButton1;
-            radios[1] = radioButton2;
-            radios[2] = radioButton3;
-            radios[3] = radioButton4;
-            foreach (RadioButton r in radios) { r.Enabled = false; r.Checked = false; }
             setTitle();
         }
 
