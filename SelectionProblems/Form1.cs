@@ -14,19 +14,34 @@ namespace SelectionProblems
 {
     public partial class MainForm : Form
     {
-        int qIndex = 0;
-        int totalNum = 0;
-        int scorePerQ = 0;
-        string answer;
-        int totalCorrect = 0;
-        int selected = -1;
-        bool[] answerCorrect;
-        bool showDetailedResult = false;
+        // index of the current problem, starting form 1
+        // 0 indicates before the test starts
+        private int qIndex = 0;
+        // total number of problems
+        private int totalNum = 0;
+        // score per problem
+        private int scorePerQ = 0;
+        // answers to each problem
+        private string correctAnswers;
+        // testee answers to the problems
+        // starting from 1
+        // testeeAnswers[0] has no meaning
+        private int[] testeeAnswers;
+        // The most index the testee has an answer to.
+        // A testee may advance to problem, and go back with or without giving an answer to the current problem
+        private int largestIndex = 0;
+        // the selected answer by the student
+        private int selected = -1;
+        // whether we should show the detailed result to the students
+        private bool showDetailedResult = false;
 
+        // random shuffled order of test indices staring from 1;
         // This should be only used when displaying problems,
         // or saving result.
         // Other subscript will all be the shuffled result.
-        int[] randomShuffle;
+        private int[] randomShuffle;
+
+        private RadioButton[] radios = new RadioButton[4];
 
         public MainForm()
         {
@@ -71,12 +86,12 @@ namespace SelectionProblems
                     {
                         MessageBox.Show("总题数与答案个数不一致");
                     }
-                    answer = line;
-                    answerCorrect = new bool[totalNum];
-                    randomShuffle = new int[totalNum];
-                    for (int i = 0; i < totalNum; i++)
+                    correctAnswers = line;
+                    testeeAnswers = new int[totalNum + 1];
+                    randomShuffle = new int[totalNum + 1];
+                    for (int i = 0; i < totalNum + 1; i++)
                     {
-                        randomShuffle[i] = i + 1;
+                        randomShuffle[i] = i;
                     }
 
                     Regex setting = new Regex(@"^\s*(\w+)\s*=\s*(\w+)$");
@@ -106,9 +121,9 @@ namespace SelectionProblems
                                 if (val == "true")
                                 {
                                     Random r = new Random();
-                                    for (int n = randomShuffle.Length - 1; n > 0; --n)
+                                    for (int n = randomShuffle.Length - 1; n > 1; --n)
                                     {
-                                        int k = r.Next(n + 1);
+                                        int k = r.Next(n) + 1;
                                         int temp = randomShuffle[n];
                                         randomShuffle[n] = randomShuffle[k];
                                         randomShuffle[k] = temp;
@@ -141,6 +156,13 @@ namespace SelectionProblems
                 textQuestion.Text = "请点击下一题";
                 MessageBox.Show("缺失题目定义文件 data/0000.rtf");
             }
+
+            button_Prev.Enabled = false;
+
+            radios[0] = radioButton1;
+            radios[1] = radioButton2;
+            radios[2] = radioButton3;
+            radios[3] = radioButton4;
         }
 
         private void button_Next_Click(object sender, EventArgs e)
@@ -148,21 +170,13 @@ namespace SelectionProblems
             if (qIndex > 0 && qIndex <= totalNum)
             {
                 selected = -1;
-                if (radioButton1.Checked)
+                for (int i = 0; i < 4; i++)
                 {
-                    selected = 0;
-                }
-                else if (radioButton2.Checked)
-                {
-                    selected = 1;
-                }
-                else if (radioButton3.Checked)
-                {
-                    selected = 2;
-                }
-                else if (radioButton4.Checked)
-                {
-                    selected = 3;
+                    if (radios[i].Checked)
+                    {
+                        selected = i;
+                        break;
+                    }
                 }
                 if (selected == -1)
                 {
@@ -171,60 +185,102 @@ namespace SelectionProblems
                 }
                 else
                 {
-                    if (selected == answer[randomShuffle[qIndex - 1] - 1] - 'A')
+                    testeeAnswers[qIndex] = selected;
+                    if (largestIndex < qIndex)
                     {
-                        totalCorrect++;
-                        answerCorrect[qIndex - 1] = true;
-                    }
-                    else
-                    {
-                        answerCorrect[qIndex - 1] = false;
+                        largestIndex = qIndex;
                     }
                 }
             }
             qIndex++;
+            if (qIndex > 1 && qIndex <= totalNum)
+            {
+                button_Prev.Enabled = true;
+            }
+            else
+            {
+                button_Prev.Enabled = false;
+            }
             if (qIndex <= totalNum)
             {
-                String fn = String.Format("data/{0:0000}.rtf", randomShuffle[qIndex - 1]);
-                try
-                {
-                    textQuestion.LoadFile(fn);
-                }
-                catch(IOException)
-                {
-                    MessageBox.Show("打开试题文件 " + fn + " 失败");
-                    this.Close();
-                    return;
-                }
+                showProblem();
             }
             else
             {
                 String msg = "";
+                int totalCorrect = 0;
                 if (showDetailedResult)
                 {
                     msg += "测试结果：\n";
-                    for (int i = 0; i < totalNum; i++)
+                    for (int i = 1; i <= totalNum; i++)
                     {
-                        if (i > 0 && i % 10 == 0)
+                        bool answerCorrect = testeeAnswers[i] == correctAnswers[randomShuffle[i] - 1] - 'A';
+                        if (i > 1 && i % 10 == 1)
                         {
                             msg += "\n";
                         }
-                        msg += (i + 1) + ". " + (answerCorrect[i] ? "正确" : "错误") + "   ";
+                        msg += i + ". " + (answerCorrect ? "正确" : "错误") + "   ";
+                        totalCorrect += answerCorrect ? 1 : 0;
                     }
                     msg += "\n";
                 }
                 msg += String.Format("测试结束，正确{0}题，总分{1}分", totalCorrect, totalCorrect * scorePerQ);
                 textQuestion.Text = msg;
                 MessageBox.Show(msg);
-                radioButton1.Enabled = false;
-                radioButton2.Enabled = false;
-                radioButton3.Enabled = false;
-                radioButton4.Enabled = false;
+                foreach (RadioButton r in radios) { r.Enabled = false; }
             }
-            radioButton1.Checked = false;
-            radioButton2.Checked = false;
-            radioButton3.Checked = false;
-            radioButton4.Checked = false;
+            if (qIndex > largestIndex || qIndex < 1)
+            {   // no problem, no answer provided previously
+                foreach (RadioButton r in radios) { r.Checked = false; }
+            }
+            else
+            {
+                radios[testeeAnswers[qIndex]].Checked = true;
+            }
+        }
+
+        private void button_Prev_Click(object sender, EventArgs e)
+        {
+            if (qIndex <= 1 || qIndex > totalNum)
+            {
+                button_Prev.Enabled = false;
+                return;
+            }
+            int selected = -1;
+            for (int i = 0; i < 4; i++)
+            {
+                if (radios[i].Checked == true)
+                {
+                    selected = i;
+                    break;
+                }
+            }
+            if (selected >= 0)
+            {
+                testeeAnswers[qIndex] = selected;
+                if (qIndex > largestIndex)
+                {
+                    largestIndex = qIndex;
+                }
+            }
+            qIndex--;
+            showProblem();
+            radios[testeeAnswers[qIndex]].Checked = true;
+        }
+
+        private void showProblem()
+        {
+            String fn = String.Format("data/{0:0000}.rtf", randomShuffle[qIndex]);
+            try
+            {
+                textQuestion.LoadFile(fn);
+            }
+            catch (IOException)
+            {
+                MessageBox.Show("打开试题文件 " + fn + " 失败");
+                this.Close();
+                return;
+            }
         }
     }
 }
