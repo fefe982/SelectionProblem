@@ -38,6 +38,9 @@
             // 
             // textQuestion
             // 
+            this.textQuestion.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.textQuestion.Location = new System.Drawing.Point(12, 12);
             this.textQuestion.Name = "textQuestion";
             this.textQuestion.ReadOnly = true;
@@ -48,6 +51,7 @@
             // 
             // radioButton1
             // 
+            this.radioButton1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.radioButton1.AutoSize = true;
             this.radioButton1.Location = new System.Drawing.Point(16, 439);
             this.radioButton1.Name = "radioButton1";
@@ -59,6 +63,7 @@
             // 
             // radioButton2
             // 
+            this.radioButton2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.radioButton2.AutoSize = true;
             this.radioButton2.Location = new System.Drawing.Point(117, 439);
             this.radioButton2.Name = "radioButton2";
@@ -70,6 +75,7 @@
             // 
             // radioButton3
             // 
+            this.radioButton3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.radioButton3.AutoSize = true;
             this.radioButton3.Location = new System.Drawing.Point(218, 439);
             this.radioButton3.Name = "radioButton3";
@@ -81,6 +87,7 @@
             // 
             // radioButton4
             // 
+            this.radioButton4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.radioButton4.AutoSize = true;
             this.radioButton4.Location = new System.Drawing.Point(319, 439);
             this.radioButton4.Name = "radioButton4";
@@ -92,6 +99,7 @@
             // 
             // button_Next
             // 
+            this.button_Next.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.button_Next.Location = new System.Drawing.Point(415, 432);
             this.button_Next.Name = "button_Next";
             this.button_Next.Size = new System.Drawing.Size(75, 23);
