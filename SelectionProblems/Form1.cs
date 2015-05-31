@@ -22,87 +22,115 @@ namespace SelectionProblems
         int selected = -1;
         bool[] answerCorrect;
         bool showDetailedResult = false;
+
+        // This should be only used when displaying problems,
+        // or saving result.
+        // Other subscript will all be the shuffled result.
+        int[] randomShuffle;
+
         public MainForm()
         {
             InitializeComponent();
 
             char []whitespace = new char[]{' ', '\t', '\r', '\n'};
-            StreamReader fs;
             try
             {
-                fs = new StreamReader("data/answer.txt");
+                using (StreamReader fs = new StreamReader("data/answer.txt"))
+                {
+                    String line = fs.ReadLine();
+                    line.Trim();
+                    int idx = line.IndexOfAny(whitespace);
+                    if (idx > 0)
+                    {
+                        line = line.Remove(idx);
+                    }
+                    scorePerQ = Int32.Parse(line);
+
+                    line = fs.ReadLine();
+                    line.Trim();
+                    idx = line.IndexOfAny(whitespace);
+                    if (idx > 0)
+                    {
+                        line = line.Remove(idx);
+                    }
+                    totalNum = Int32.Parse(line);
+
+                    line = fs.ReadLine();
+                    line.Trim();
+                    line = line.ToUpper();
+                    for (int i = 0; i < line.Length; i++)
+                    {
+                        if (line[i] < 'A' || line[i] > 'D')
+                        {
+                            line = line.Remove(i, 1);
+                            i--;
+                        }
+                    }
+
+                    if (line.Length != totalNum)
+                    {
+                        MessageBox.Show("总题数与答案个数不一致");
+                    }
+                    answer = line;
+                    answerCorrect = new bool[totalNum];
+                    randomShuffle = new int[totalNum];
+                    for (int i = 0; i < totalNum; i++)
+                    {
+                        randomShuffle[i] = i + 1;
+                    }
+
+                    Regex setting = new Regex(@"^\s*(\w+)\s*=\s*(\w+)$");
+                    while (fs.Peek() >= 0)
+                    {
+                        line = fs.ReadLine();
+                        MatchCollection mc;
+                        line = Regex.Replace(line, @"\s*(?:;.*)?$", "");
+                        if (line == "")
+                        {
+                            continue;
+                        }
+                        mc = setting.Matches(line);
+                        if (mc.Count == 1)
+                        {
+                            String key = mc[0].Groups[1].Value;
+                            String val = mc[0].Groups[2].Value;
+                            switch (key)
+                            {
+                            case "show_result":
+                                if (val == "true")
+                                {
+                                    showDetailedResult = true;
+                                }
+                                break;
+                            case "shuffle_problems":
+                                if (val == "true")
+                                {
+                                    Random r = new Random();
+                                    for (int n = randomShuffle.Length - 1; n > 0; --n)
+                                    {
+                                        int k = r.Next(n + 1);
+                                        int temp = randomShuffle[n];
+                                        randomShuffle[n] = randomShuffle[k];
+                                        randomShuffle[k] = temp;
+                                    }
+                                }
+                                break;
+                            default:
+                                MessageBox.Show("未知的设置项 - " + key);
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("未能识别的设置 - " + line);
+                        }
+                    }
+                }
             }
             catch (Exception)
             {
                 MessageBox.Show("未找到试卷定义文件 data/answer.txt");
                 return;
-            }
-            try
-            {
-                String line = fs.ReadLine();
-                line.Trim();
-                int idx = line.IndexOfAny(whitespace);
-                if (idx > 0)
-                {
-                    line = line.Remove(idx);
-                }
-                scorePerQ = Int32.Parse(line);
-
-                line = fs.ReadLine();
-                line.Trim();
-                idx = line.IndexOfAny(whitespace);
-                if (idx > 0)
-                {
-                    line = line.Remove(idx);
-                }
-                totalNum = Int32.Parse(line);
-
-                line = fs.ReadLine();
-                line.Trim();
-                line = line.ToUpper();
-                for (int i = 0; i < line.Length; i++)
-                {
-                    if (line[i] < 'A' || line[i] > 'D')
-                    {
-                        line = line.Remove(i, 1);
-                        i--;
-                    }
-                }
-
-                if (line.Length != totalNum)
-                {
-                    MessageBox.Show("总题数与答案个数不一致");
-                }
-                answer = line;
-                answerCorrect = new bool[totalNum];
-
-                Regex setting = new Regex(@"^\s*(\w+)\s*=\s*(\w+)\s*(?:;.*)?$");
-                while (fs.Peek() >= 0)
-                {
-                    line = fs.ReadLine();
-                    MatchCollection mc = setting.Matches(line);
-                    if (mc.Count == 1)
-                    {
-                        String key = mc[0].Groups[1].Value;
-                        String val = mc[0].Groups[2].Value;
-                        switch(key)
-                        {
-                        case "show_result":
-                            if (val == "true")
-                            {
-                                showDetailedResult = true;
-                            }
-                            break;
-                        default:
-                            MessageBox.Show("未知的设置项 - " + key);
-                            break;
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                fs.Close();
             }
             try
             {
@@ -143,7 +171,7 @@ namespace SelectionProblems
                 }
                 else
                 {
-                    if (selected == answer[qIndex - 1] - 'A')
+                    if (selected == answer[randomShuffle[qIndex - 1] - 1] - 'A')
                     {
                         totalCorrect++;
                         answerCorrect[qIndex - 1] = true;
@@ -157,7 +185,7 @@ namespace SelectionProblems
             qIndex++;
             if (qIndex <= totalNum)
             {
-                String fn = String.Format("data/{0:0000}.rtf", qIndex);
+                String fn = String.Format("data/{0:0000}.rtf", randomShuffle[qIndex - 1]);
                 try
                 {
                     textQuestion.LoadFile(fn);
